@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:garage_app/Views/splash_screen.dart';
+import 'package:garage_app/core/app_theme.dart';
+import 'package:garage_app/presentation/screens/splash_screen.dart';
 import 'package:sizer/sizer.dart';
 
-import 'constants/theme_manager.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp._internal();
@@ -30,7 +30,7 @@ class _MyAppState extends State<MyApp> {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           home: SplashScreen(),
-          theme: getApplicationTheme(),
+          theme: appTheme,
         );
       },
     );
