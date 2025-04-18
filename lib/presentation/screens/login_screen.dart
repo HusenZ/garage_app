@@ -3,9 +3,7 @@ import 'package:garage_app/presentation/screens/user_home_screen.dart';
 import 'package:garage_app/presentation/screens/user_register_screen.dart';
 import 'package:garage_app/utils/firebase_auth_service.dart';
 
-
 class LoginScreen extends StatefulWidget {
-
   const LoginScreen({super.key});
 
   @override
@@ -26,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
-           Positioned.fill(
+          Positioned.fill(
             child: Image.asset(
               'assets/images/bgimage.png',
               fit: BoxFit.cover,
@@ -42,7 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Welcome Back", style: Theme.of(context).textTheme.labelLarge),
+                      Text(
+                        "Welcome Back",
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
                       SizedBox(height: 24),
                       TextFormField(
                         controller: emailController,
@@ -52,18 +53,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(height: 12),
                       TextFormField(
                         controller: passwordController,
-                        decoration: InputDecoration(hintText: "Password", suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility),
+                        decoration: InputDecoration(
+                          hintText: "Password",
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
                             onPressed: () {
                               setState(() {
                                 _obscurePassword = !_obscurePassword;
                               });
                             },
-                          ),),
+                          ),
+                        ),
                         obscureText: _obscurePassword,
-                        validator: (val) => val!.isEmpty ? "Enter password" : null,
+                        validator:
+                            (val) => val!.isEmpty ? "Enter password" : null,
                       ),
                       SizedBox(height: 24),
                       SizedBox(
@@ -76,12 +83,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                 passwordController.text.trim(),
                               );
                               result == "success"
-                                  ? ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Logged in")))
-                                  : ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
-                             if( result == "success"){
-                               Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => HomeScreen(),), (route) => false,);
-                             }
-
+                                  ? ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Logged in")),
+                                  )
+                                  : ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(result)),
+                                  );
+                              if (result == "success") {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (context) => HomeScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              }
                             }
                           },
                           child: Text("LOGIN"),
@@ -93,12 +108,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => RegisterScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => RegisterScreen(),
+                              ),
                             );
                           },
                           child: Text("Don't have an account? Register"),
                         ),
-                      )
+                      ),
                     ],
                   ),
                 ),
