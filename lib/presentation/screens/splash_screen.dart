@@ -53,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen> {
         await FirebaseFirestore.instance.collection('users').doc(uid).get();
     if (userDoc.exists) {
       final role = userDoc.data()?['role'];
-      if (role == 'user') {
+      if (role == 'customer') {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => HomeScreen()),
           (route) => false,

@@ -38,8 +38,10 @@ class UBookingScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: ListTile(
-                  leading: const Icon(Icons.build_circle_rounded,
-                      color: Colors.orange),
+                  leading: const Icon(
+                    Icons.build_circle_rounded,
+                    color: Colors.orange,
+                  ),
                   title: Text(booking['service'] ?? "No service name"),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

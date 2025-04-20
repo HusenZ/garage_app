@@ -1,18 +1,57 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:garage_app/core/garages_c.dart';
 import 'package:garage_app/presentation/screens/book_service_screen.dart';
+import 'package:sizer/sizer.dart';
 
-class GarageNearMeScreen extends StatelessWidget {
+class GarageNearMeScreen extends StatefulWidget {
   const GarageNearMeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    
+  _GarageNearMeScreenState createState() => _GarageNearMeScreenState();
+}
 
+class _GarageNearMeScreenState extends State<GarageNearMeScreen> {
+  bool _isLoading = true;
+  bool _hasError = false;
+  List<Map<String, dynamic>> _garages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchGarages();
+  }
+
+  Future<void> _fetchGarages() async {
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('garage').get();
+      if (querySnapshot.docs.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+        return;
+      }
+
+      setState(() {
+        _garages = querySnapshot.docs.map((doc) => doc.data()).toList();
+        _isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    print(_garages);
     final carGarages =
-        garages.where((garage) => garage['type'] == 'CAR').toList();
+        _garages.where((garage) => garage['garageType'] == 'CAR').toList();
     final bikeGarages =
-        garages.where((garage) => garage['type'] == 'BIKE').toList();
+        _garages.where((garage) => garage['garageType'] == 'BIKE').toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -22,28 +61,37 @@ class GarageNearMeScreen extends StatelessWidget {
         foregroundColor: Colors.black,
       ),
       backgroundColor: Colors.grey.shade100,
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            "🚗 Car Workshops",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          ...carGarages.map((garage) => GarageCard(garage: garage)),
-          const SizedBox(height: 24),
-          const Text(
-            "🏍️ Bike Workshops",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          ...bikeGarages.map((garage) => GarageCard(garage: garage)),
-        ],
-      ),
+      body:
+          _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : _hasError
+              ? Center(
+                child: Text(
+                  'Error fetching data. Please try again later.',
+                  style: TextStyle(color: Colors.red, fontSize: 16),
+                ),
+              )
+              : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  const Text(
+                    "🚗 Car Workshops",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  ...carGarages.map((garage) => GarageCard(garage: garage)),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "🏍️ Bike Workshops",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  ...bikeGarages.map((garage) => GarageCard(garage: garage)),
+                ],
+              ),
     );
   }
 }
-
 
 class GarageCard extends StatelessWidget {
   final Map<String, dynamic> garage;
@@ -53,11 +101,14 @@ class GarageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-  onTap: 
-  () {
-    
-    Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen(garage: garage),));
-  },
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BookingScreen(garage: garage),
+          ),
+        );
+      },
       child: Card(
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -87,7 +138,7 @@ class GarageCard extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(4),
                       child: Image.asset(
-                        garage['iconPath'], // Use asset path instead of IconData
+                        'assets/icons/mechanic.png',
                         width: 24,
                         height: 24,
                       ),
@@ -98,7 +149,7 @@ class GarageCard extends StatelessWidget {
                   left: 10,
                   top: 10,
                   child: Text(
-                    '${garage['type'].toString().toUpperCase()} WORKSHOP',
+                    '${garage['garageType'].toString().toUpperCase()} WORKSHOP',
                     style: const TextStyle(
                       color: Colors.black87,
                       fontSize: 10,
@@ -108,7 +159,6 @@ class GarageCard extends StatelessWidget {
                 ),
               ],
             ),
-      
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
               child: Column(
@@ -118,8 +168,7 @@ class GarageCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Garage Name',
-                          style: TextStyle(fontSize: 12)),
+                      const Text('Garage Name', style: TextStyle(fontSize: 12)),
                       const Text('Garage ID', style: TextStyle(fontSize: 12)),
                     ],
                   ),
@@ -127,52 +176,63 @@ class GarageCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        garage['name'],
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 14),
+                      SizedBox(
+                        child: Text(
+                          garage['garageName'],
+                          overflow: TextOverflow.fade,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.sp,
+                          ),
+                        ),
                       ),
-                      Text(
-                        garage['id'],
-                        style: const TextStyle(fontSize: 12),
+                      SizedBox(
+                        width: 22.w,
+                        child: Text(
+                          garage['uid'],
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 14.sp),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 10),
-      
                   // Location and Time
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        '.............  ${garage['distance']}',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      const Spacer(),
-                      const Text('Time', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
+                  // Row(
+                  //   children: [
+                  //     const Icon(Icons.location_on, size: 16),
+                  //     const SizedBox(width: 4),
+                  //     Text(
+                  //       '.............  ${garage['distance']}',
+                  //       style: const TextStyle(fontSize: 12),
+                  //     ),
+                  //     const Spacer(),
+                  //     const Text('Time', style: TextStyle(fontSize: 12)),
+                  //   ],
+                  // ),
                   const SizedBox(height: 4),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const Icon(Icons.location_on, size: 16),
                       Expanded(
                         child: Text(
-                          garage['address'],
+                          garage['garageAddress'],
                           style: const TextStyle(fontSize: 12),
                         ),
                       ),
-                      Text(
-                        garage['time'],
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.bold),
-                      ),
+                      // Text(
+                      //   garage['time'],
+                      //   style: const TextStyle(
+                      //     fontSize: 13,
+                      //     fontWeight: FontWeight.bold,
+                      //   ),
+                      // ),
                     ],
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),

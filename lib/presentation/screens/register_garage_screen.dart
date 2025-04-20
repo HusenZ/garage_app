@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:garage_app/core/all_services_c.dart';
 import 'package:garage_app/presentation/screens/garage_home_screen.dart';
 import 'package:garage_app/utils/firebase_auth_service.dart';
 import 'package:sizer/sizer.dart';
@@ -16,7 +17,12 @@ class _RegisterGarageScreenState extends State<RegisterGarageScreen> {
   final TextEditingController _lastName = TextEditingController();
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
+  final TextEditingController _garageName = TextEditingController();
+  final TextEditingController _garagePhone = TextEditingController();
+  final TextEditingController _garageAddress = TextEditingController();
 
+  String _garageType = 'CAR';
+  final List<String> _selectedServices = [];
   bool _obscurePassword = true;
   bool _agreed = false;
   bool _isLoading = false;
@@ -30,6 +36,13 @@ class _RegisterGarageScreenState extends State<RegisterGarageScreen> {
         return;
       }
 
+      if (_selectedServices.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You must select atleast one service.')),
+        );
+        return;
+      }
+
       setState(() => _isLoading = true);
 
       final result = await AuthService().registerGarage(
@@ -37,6 +50,11 @@ class _RegisterGarageScreenState extends State<RegisterGarageScreen> {
         lastName: _lastName.text.trim(),
         email: _email.text.trim(),
         password: _password.text.trim(),
+        garageName: _garageName.text.trim(),
+        garagePhone: _garagePhone.text.trim(),
+        garageAddress: _garageAddress.text.trim(),
+        garageType: _garageType,
+        services: _selectedServices,
       );
 
       setState(() => _isLoading = false);
@@ -142,7 +160,93 @@ class _RegisterGarageScreenState extends State<RegisterGarageScreen> {
                               : null,
                 ),
                 SizedBox(height: 3.h),
+                Text(
+                  "Garage Details",
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 2.h),
 
+                TextFormField(
+                  controller: _garageName,
+                  decoration: InputDecoration(
+                    hintText: "Garage Name",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator:
+                      (value) => value!.isEmpty ? 'Garage name required' : null,
+                ),
+                SizedBox(height: 2.h),
+
+                TextFormField(
+                  controller: _garagePhone,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    hintText: "Garage Phone",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator:
+                      (value) =>
+                          value!.isEmpty ? 'Garage phone required' : null,
+                ),
+                SizedBox(height: 2.h),
+
+                TextFormField(
+                  controller: _garageAddress,
+                  decoration: InputDecoration(
+                    hintText: "Garage Address",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator:
+                      (value) =>
+                          value!.isEmpty ? 'Garage address required' : null,
+                ),
+                SizedBox(height: 2.h),
+
+                DropdownButtonFormField<String>(
+                  value: _garageType,
+                  items:
+                      ['CAR', 'BIKE'].map((type) {
+                        return DropdownMenuItem(value: type, child: Text(type));
+                      }).toList(),
+                  onChanged: (val) => setState(() => _garageType = val!),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: "Garage Type",
+                  ),
+                ),
+                SizedBox(height: 2.h),
+
+                Text(
+                  "Select Services Offered",
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      allServices.map((service) {
+                        final title = service['title']!;
+                        final isSelected = _selectedServices.contains(title);
+                        return FilterChip(
+                          label: Text(title),
+                          selected: isSelected,
+                          onSelected: (val) {
+                            setState(() {
+                              isSelected
+                                  ? _selectedServices.remove(title)
+                                  : _selectedServices.add(title);
+                            });
+                          },
+                        );
+                      }).toList(),
+                ),
+                SizedBox(height: 3.h),
                 CheckboxListTile(
                   value: _agreed,
                   onChanged: (val) => setState(() => _agreed = val!),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:garage_app/core/all_services_c.dart';
 import 'package:garage_app/utils/booking_service.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:sizer/sizer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -16,6 +17,50 @@ class BookingScreen extends StatefulWidget {
 class _BookingScreenState extends State<BookingScreen> {
   String? selectedService;
   final _formKey = GlobalKey<FormState>();
+  int? generatedPrice;
+
+  Future<Position?> _getUserLocation() async {
+    LocationPermission permission;
+
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enable location services."),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return null;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Location permission denied."),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return null;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Location permission permanently denied."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return null;
+    }
+
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +112,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         child: Padding(
                           padding: const EdgeInsets.all(4.0),
                           child: Image.asset(
-                            garage['iconPath'],
+                            'assets/images/mechanic.png',
                             width: 26,
                             height: 26,
                           ),
@@ -78,7 +123,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       left: 12,
                       top: 10,
                       child: Text(
-                        '${garage['type'].toString().toUpperCase()} WORKSHOP',
+                        '${garage['garageType'].toString().toUpperCase()} WORKSHOP',
                         style: const TextStyle(
                           color: Colors.black87,
                           fontSize: 10,
@@ -113,11 +158,11 @@ class _BookingScreenState extends State<BookingScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            garage['name'],
+                            garage['garageName'],
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            garage['id'],
+                            garage['uid'],
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -128,8 +173,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       Row(
                         children: [
                           const Icon(Icons.location_on, size: 16),
-                          const SizedBox(width: 4),
-                          Text('............. ${garage['distance']}'),
+
                           const Spacer(),
                           const Text('Time', style: TextStyle(fontSize: 12)),
                         ],
@@ -140,15 +184,8 @@ class _BookingScreenState extends State<BookingScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              garage['address'],
+                              garage['garageAddress'],
                               style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                          Text(
-                            garage['time'],
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
@@ -166,8 +203,8 @@ class _BookingScreenState extends State<BookingScreen> {
           const SizedBox(height: 8),
 
           // Services list text (as per screenshot)
-          const Text(
-            'Battery, Carburetor Cleaning, Dynamo Meter, Electrical Repair, Engine Repair, General Inspection, Major Service, Minor Service, Oil Change, Rear Shocks, Steering And Suspension Repair, Tyres.',
+          Text(
+            (garage['services'] as List<dynamic>).join(', '),
             style: TextStyle(fontSize: 13, height: 1.4),
           ),
 
@@ -199,12 +236,26 @@ class _BookingScreenState extends State<BookingScreen> {
                         value == null ? "Please select a service type" : null,
                 onChanged: (value) {
                   setState(() {
+                    generatedPrice = 100 + (value.hashCode % 400);
                     selectedService = value;
                   });
                 },
               ),
             ),
           ),
+
+          if (selectedService != null && generatedPrice != null)
+            Padding(
+              padding: EdgeInsets.only(top: 2.h),
+              child: Text(
+                'Estimated Price: ₹$generatedPrice',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.green,
+                ),
+              ),
+            ),
 
           SizedBox(height: 3.h),
 
@@ -259,58 +310,122 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              onPressed: () {
+              onPressed: () async {
+                // Show loading dialog
                 showDialog(
                   context: context,
+                  barrierDismissible: false,
                   builder:
-                      (context) => AlertDialog(
-                        title: const Text("Confirm Booking"),
-                        content: const Text(
-                          "Have you called the garage and confirmed availability?",
+                      (context) => const AlertDialog(
+                        title: Text("Getting your location"),
+                        content: Row(
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                "Please wait while we fetch your current location.",
+                              ),
+                            ),
+                          ],
                         ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Cancel"),
-                          ),
-                          ElevatedButton(
-                            onPressed: () async {
-                              if (_formKey.currentState!.validate()) {
-                                try {
-                                  await bookService(
-                                    widget.garage,
-                                    selectedService!,
-                                  );
-
-                                  if (!mounted) return;
-
-                                  Navigator.pop(context); // Close dialog
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Service booked successfully!",
-                                      ),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                } catch (e) {
-                                  if (!mounted) return;
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text("Error: ${e.toString()}"),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-
-                            child: const Text("Yes, Book Now"),
-                          ),
-                        ],
                       ),
                 );
+
+                try {
+                  // Ask permission and fetch location
+                  LocationPermission permission =
+                      await Geolocator.checkPermission();
+                  if (permission == LocationPermission.denied ||
+                      permission == LocationPermission.deniedForever) {
+                    permission = await Geolocator.requestPermission();
+                  }
+
+                  if (permission == LocationPermission.denied ||
+                      permission == LocationPermission.deniedForever) {
+                    Navigator.pop(context); // Close loading dialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          "Location permission is required to continue.",
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  // Get user location
+                  final position = await Geolocator.getCurrentPosition(
+                    desiredAccuracy: LocationAccuracy.high,
+                  );
+
+                  Navigator.pop(context); // Close loading dialog
+
+                  // Show confirmation dialog
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => AlertDialog(
+                          title: const Text("Confirm Booking"),
+                          content: const Text(
+                            "Have you called the garage and confirmed availability?",
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text("Cancel"),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                if (_formKey.currentState!.validate()) {
+                                  try {
+                                    await bookService(
+                                      garage,
+                                      selectedService!,
+                                      garage['uid'],
+                                      generatedPrice ?? 100,
+                                      position.latitude,
+                                      position.longitude,
+                                    );
+
+                                    if (!mounted) return;
+
+                                    Navigator.pop(context); // Close dialog
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Service booked successfully!",
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    if (!mounted) return;
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("Error: ${e.toString()}"),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              child: const Text("Yes, Book Now"),
+                            ),
+                          ],
+                        ),
+                  );
+                } catch (e) {
+                  Navigator.pop(context); // Close loading dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Failed to get location: $e"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
             ),
           ),

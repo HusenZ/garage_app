@@ -11,6 +11,11 @@ class AuthService {
     required String lastName,
     required String email,
     required String password,
+    required String garageName,
+    required String garagePhone,
+    required String garageAddress,
+    required String garageType,
+    required List<String> services,
   }) async {
     try {
       // Check in users collection
@@ -48,6 +53,11 @@ class AuthService {
         'firstName': firstName,
         'lastName': lastName,
         'email': email,
+        'garageName': garageName,
+        'garagePhone': garagePhone,
+        'garageAddress': garageAddress,
+        'garageType': garageType,
+        'services': services,
         'role': 'garage',
         'createdAt': Timestamp.now(),
       });
