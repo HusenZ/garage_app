@@ -63,9 +63,10 @@ class _RegisterGarageScreenState extends State<RegisterGarageScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Registered successfully!')));
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (context) => GarageHomeScreen()));
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => GarageHomeScreen()),
+          (route) => false,
+        );
       } else {
         ScaffoldMessenger.of(
           context,
