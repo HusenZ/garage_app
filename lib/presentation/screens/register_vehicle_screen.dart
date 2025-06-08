@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterVehicleScreen extends StatefulWidget {
   final String vehicleType; // "Car" or "Bike"
@@ -14,6 +16,7 @@ class _RegisterVehicleScreenState extends State<RegisterVehicleScreen> {
   String? selectedType;
   String? selectedBrand;
   String? selectedModel;
+  bool isLoading = false;
 
   final carTypes = ["Sedan", "SUV", "Hatchback", "Convertible"];
   final bikeTypes = ["Scooter", "Cruiser", "Sport", "Commuter"];
@@ -39,12 +42,85 @@ class _RegisterVehicleScreenState extends State<RegisterVehicleScreen> {
     return map[selectedType] ?? [];
   }
 
-  void selectModel() {
-    // Your model selection navigation logic
+  void selectBrand() {
+    final brands = getModels();
+    showModalBottomSheet(
+      context: context,
+      builder:
+          (_) => _SelectionSheet(
+            title: "Select Brand",
+            options: brands,
+            onSelected: (value) {
+              setState(() {
+                selectedBrand = value;
+                selectedModel = null;
+              });
+              Navigator.pop(context);
+            },
+          ),
+    );
   }
 
-  void selectBrand() {
-    // Your brand selection navigation logic
+  void selectModel() {
+    final models = getModels();
+    showModalBottomSheet(
+      context: context,
+      builder:
+          (_) => _SelectionSheet(
+            title: "Select Model",
+            options: models,
+            onSelected: (value) {
+              setState(() {
+                selectedModel = value;
+              });
+              Navigator.pop(context);
+            },
+          ),
+    );
+  }
+
+  Future<void> saveVehicleData() async {
+    if (selectedType == null ||
+        selectedBrand == null ||
+        selectedModel == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) throw Exception("User not logged in");
+
+      final vehicleData = {
+        'vehicleType': widget.vehicleType,
+        'categoryType': selectedType,
+        'brand': selectedBrand,
+        'model': selectedModel,
+        'timestamp': FieldValue.serverTimestamp(),
+      };
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('vehicle')
+          .add(vehicleData);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Vehicle Registered")));
+
+      Navigator.pop(context); // or navigate to another screen
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -84,14 +160,12 @@ class _RegisterVehicleScreenState extends State<RegisterVehicleScreen> {
                         '${widget.vehicleType}-Type',
                       ),
                       items:
-                          getTypes()
-                              .map(
-                                (type) => DropdownMenuItem(
-                                  value: type,
-                                  child: Text(type),
-                                ),
-                              )
-                              .toList(),
+                          getTypes().map((type) {
+                            return DropdownMenuItem(
+                              value: type,
+                              child: Text(type),
+                            );
+                          }).toList(),
                       onChanged: (value) {
                         setState(() {
                           selectedType = value;
@@ -122,7 +196,10 @@ class _RegisterVehicleScreenState extends State<RegisterVehicleScreen> {
 
                     // Model
                     GestureDetector(
-                      onTap: selectedType != null ? selectModel : null,
+                      onTap:
+                          selectedType != null && selectedBrand != null
+                              ? selectModel
+                              : null,
                       child: AbsorbPointer(
                         child: TextFormField(
                           decoration: _inputDecoration('Select Model').copyWith(
@@ -138,11 +215,11 @@ class _RegisterVehicleScreenState extends State<RegisterVehicleScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Continue
+                    // Continue Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {}, // Continue logic
+                        onPressed: isLoading ? null : saveVehicleData,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -150,7 +227,12 @@ class _RegisterVehicleScreenState extends State<RegisterVehicleScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text("CONTINUE"),
+                        child:
+                            isLoading
+                                ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                                : const Text("CONTINUE"),
                       ),
                     ),
                   ],
@@ -171,4 +253,37 @@ class _RegisterVehicleScreenState extends State<RegisterVehicleScreen> {
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
   );
+}
+
+/// Bottom sheet for selection
+class _SelectionSheet extends StatelessWidget {
+  final String title;
+  final List<String> options;
+  final Function(String) onSelected;
+
+  const _SelectionSheet({
+    required this.title,
+    required this.options,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Wrap(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ...options.map(
+            (e) => ListTile(title: Text(e), onTap: () => onSelected(e)),
+          ),
+        ],
+      ),
+    );
+  }
 }

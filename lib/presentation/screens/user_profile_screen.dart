@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:garage_app/presentation/screens/role_login.dart';
 import 'package:garage_app/presentation/screens/select_vehicle_screen.dart';
+import 'package:garage_app/utils/firebase_auth_service.dart';
 import 'package:garage_app/utils/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -99,9 +101,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const Divider(),
                     const ListTile(title: Text("Services History")),
                     const Divider(),
-                    ListTile(title: Text("Register Vehicle"), onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => SelectVehicleScreen(),));
-                    }),
+                    ListTile(
+                      title: Text("Register Vehicle"),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => SelectVehicleScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      title: Text("LogOut"),
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder:
+                              (context) => AlertDialog(
+                                title: const Text("Confirm Logout"),
+                                content: const Text(
+                                  "Are you sure you want to log out?",
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.of(context).pop(),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.of(
+                                        context,
+                                      ).pop(); // Close the dialog
+                                      await AuthService().logoutUser();
+
+                                      Navigator.of(context).pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                          builder: (context) => RoleLogin(),
+                                        ),
+                                        (route) => false,
+                                      );
+                                    },
+                                    child: const Text(
+                                      "Logout",
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),

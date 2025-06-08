@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "3039548145",
-    "project_id": "fix-my-ride-c38b3",
-    "storage_bucket": "fix-my-ride-c38b3.firebasestorage.app"
+    "project_number": "641450874175",
+    "project_id": "fix-my-ride-2",
+    "storage_bucket": "fix-my-ride-2.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:3039548145:android:6d79878af108aae979cf50",
+        "mobilesdk_app_id": "1:641450874175:android:8d33c4ebcc2d249bd42f8a",
         "android_client_info": {
           "package_name": "com.example.garage_app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAufmcHH_ocNRPu0KW5ky_xP_q7WRJ6YMI"
+          "current_key": "AIzaSyDC5t-SIKwaordhmaTc9nTy49R7MD6sy-c"
         }
       ],
       "services": {

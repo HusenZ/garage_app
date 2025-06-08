@@ -5,7 +5,9 @@ import 'package:garage_app/presentation/screens/g_customers_screen.dart';
 import 'package:garage_app/presentation/screens/garage_booking_history.dart';
 import 'package:garage_app/presentation/screens/garage_sales_screen.dart';
 import 'package:garage_app/presentation/screens/live_booking_screen.dart';
+import 'package:garage_app/presentation/screens/role_login.dart';
 import 'package:garage_app/presentation/widgets/garage_card.dart';
+import 'package:garage_app/utils/firebase_auth_service.dart';
 import 'package:sizer/sizer.dart';
 
 class GarageHomeScreen extends StatefulWidget {
@@ -155,6 +157,47 @@ class _GarageHomeScreenState extends State<GarageHomeScreen> {
                     MaterialPageRoute(
                       builder: (context) => GBookingHistoryScreen(),
                     ),
+                  );
+                },
+              ),
+              _buildDrawerItem(
+                context,
+                icon: Icons.logout_rounded,
+                label: 'Log Out',
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => AlertDialog(
+                          title: const Text("Confirm Logout"),
+                          content: const Text(
+                            "Are you sure you want to log out?",
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text("Cancel"),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                Navigator.of(context).pop(); // Close the dialog
+                                await AuthService()
+                                    .logoutUser(); // Call your logout function
+                                // Navigate to login screen (replace with your login screen)
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (context) => RoleLogin(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                              child: const Text(
+                                "Logout",
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
                   );
                 },
               ),

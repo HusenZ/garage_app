@@ -50,19 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAufmcHH_ocNRPu0KW5ky_xP_q7WRJ6YMI',
-    appId: '1:3039548145:android:6d79878af108aae979cf50',
-    messagingSenderId: '3039548145',
-    projectId: 'fix-my-ride-c38b3',
-    storageBucket: 'fix-my-ride-c38b3.firebasestorage.app',
+    apiKey: 'AIzaSyDC5t-SIKwaordhmaTc9nTy49R7MD6sy-c',
+    appId: '1:641450874175:android:8d33c4ebcc2d249bd42f8a',
+    messagingSenderId: '641450874175',
+    projectId: 'fix-my-ride-2',
+    storageBucket: 'fix-my-ride-2.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAxcxGnzgFSuuF-Ho6Hzi2XyWWu9pliZBY',
-    appId: '1:3039548145:ios:8adfb238e313c2d479cf50',
-    messagingSenderId: '3039548145',
-    projectId: 'fix-my-ride-c38b3',
-    storageBucket: 'fix-my-ride-c38b3.firebasestorage.app',
+    apiKey: 'AIzaSyAepyP7s0B0LJc2_39Gwd9wSrG5jK7Z1nE',
+    appId: '1:641450874175:ios:93a4b926cfa32718d42f8a',
+    messagingSenderId: '641450874175',
+    projectId: 'fix-my-ride-2',
+    storageBucket: 'fix-my-ride-2.firebasestorage.app',
     iosBundleId: 'com.example.garageApp',
   );
+
 }
